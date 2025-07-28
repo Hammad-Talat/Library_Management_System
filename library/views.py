@@ -1,3 +1,4 @@
+import random
 from rest_framework import viewsets
 from .models import Student, Book, Loan ,Author
 from .serializers import StudentSerializer, BookSerializer, LoanSerializer ,AuthorSerializer 
@@ -27,7 +28,6 @@ def get_author_by_name(request, name):
 @api_view(['GET'])
 def filter_books_by_title(request):
     title = request.GET.get('title', '')
-    print("Hereeeeeeeeeeeeee")
     books = Book.objects.all()
     if title:
         books = books.filter(title__icontains=title)
@@ -44,3 +44,22 @@ def filter_books_by_year(request):
 
     serializer = BookSerializer(books, many=True)
     return Response(serializer.data)
+@api_view(['GET'])
+def generate_200_books(request):
+    author = Author.objects.first()
+    if not author:
+        return Response({"error": "No author found. Please create at least one author first."}, status=400)
+
+    books_to_create = []
+    for i in range(1, 201):
+        book = Book(
+            title=f"Book {i}",
+            author=author,
+            published_year=random.choice([2020, 2021, 2022, 2023, 2024]),
+            available_copies=random.randint(1, 10)
+        )
+        books_to_create.append(book)
+
+    Book.objects.bulk_create(books_to_create)  
+
+    return Response({"message": "200 books created successfully using bulk_create!"})
